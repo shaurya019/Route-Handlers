@@ -1,8 +1,23 @@
+import { redirect } from "next/navigation";
 import { comments } from "../comments/data";
 
+// export async function GET(request: Request, { params }: { params: { id: string } }) {
+//     const comment = comments.find((x) => x.id === parseInt(params.id));
+//     return Response.json(comment);
+// }
+
 export async function GET(request: Request, { params }: { params: { id: string } }) {
-    const comment = comments.find((x) => x.id === parseInt(params.id));
-    return Response.json(comment);
+    const url = new URL(request.url);
+    const searchParams = new URLSearchParams(url.search);
+
+    // Get the 'query' parameter
+    const query = searchParams.get("query");
+    const filterComments = query ? comments.filter((c) => c.name.includes(query)) : comments
+
+    return new Response(JSON.stringify(filterComments), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+    });
 }
 
 export async function PATCH(request: Request, { params }: { params: { id: string } }) {
@@ -10,6 +25,9 @@ export async function PATCH(request: Request, { params }: { params: { id: string
     const { name, email, age } = body;
     
     const id = parseInt(params.id);
+    if (id > comments.length) {
+        redirect("/comments");
+    }
     if (isNaN(id)) {
         return new Response(JSON.stringify({ error: "Invalid ID" }), { status: 400 });
     }
